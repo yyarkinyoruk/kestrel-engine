@@ -22,13 +22,7 @@ import {
   Gauge,
 } from "lucide-react";
 import type { SignalWithCompany } from "@/lib/types";
-
-// Kaynak renklerini belirle
-const sourceColors: Record<string, string> = {
-  "e-ÇED": "bg-blue-50 text-blue-700 border-blue-100",
-  "E-TUYS": "bg-violet-50 text-violet-700 border-violet-100",
-  TKDK: "bg-amber-50 text-amber-700 border-amber-100",
-};
+import type { AiAnalysis } from "@/lib/gemini";
 
 // Tarih formatı: "2026-04-10" → "10 Nisan" veya "Bugün/Dün/..."
 function formatDate(dateStr: string | null): string {
@@ -50,16 +44,67 @@ function formatDate(dateStr: string | null): string {
 export default function DashboardClient({ signals }: { signals: SignalWithCompany[] }) {
   const [selected, setSelected] = useState<SignalWithCompany | null>(null);
   const [activeFilter, setActiveFilter] = useState("Bu Ay");
-  const [emailGenerated, setEmailGenerated] = useState(false);
+  const [emailData, setEmailData] = useState<{ subject: string; body: string } | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [analysis, setAnalysis] = useState<AiAnalysis | null>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
 
   const openDrawer = (sig: SignalWithCompany) => {
     setSelected(sig);
-    setEmailGenerated(false);
+    setEmailData(null);
+    setAnalysis(null);
   };
 
   const closeDrawer = () => {
     setSelected(null);
-    setEmailGenerated(false);
+    setEmailData(null);
+    setAnalysis(null);
+  };
+
+  // Gemini AI ile sinyal analizi üret
+  const handleGenerateAnalysis = async () => {
+    if (!selected) return;
+    setAnalysisLoading(true);
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signalId: selected.id, mode: 'analysis' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAnalysis(data.analysis);
+      } else {
+        alert('AI analizi alınamadı: ' + (data.error || 'Bilinmeyen hata'));
+      }
+    } catch (err) {
+      alert('Bağlantı hatası: ' + String(err));
+    } finally {
+      setAnalysisLoading(false);
+    }
+  };
+
+  // Gemini AI ile mail taslağı üret
+  const handleGenerateEmail = async () => {
+    if (!selected) return;
+    setEmailLoading(true);
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signalId: selected.id, mode: 'email' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEmailData(data.email);
+      } else {
+        alert('Mail taslağı alınamadı: ' + (data.error || 'Bilinmeyen hata'));
+      }
+    } catch (err) {
+      alert('Bağlantı hatası: ' + String(err));
+    } finally {
+      setEmailLoading(false);
+    }
   };
 
   return (
@@ -247,33 +292,73 @@ export default function DashboardClient({ signals }: { signals: SignalWithCompan
                 <a href={selected.source_url || "#"} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">Çevre Bakanlığı e-ÇED Olumlu Kararları</a>
               </div>
 
-              {emailGenerated && (
+              {/* AI Analiz Kartı */}
+              {analysis ? (
+                <div className="mb-6 rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-white p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-emerald-600" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">AI Analizi</span>
+                    <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      analysis.urgency === 'high' ? 'bg-red-50 text-red-700' :
+                      analysis.urgency === 'medium' ? 'bg-amber-50 text-amber-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {analysis.urgency === 'high' ? 'Acil' : analysis.urgency === 'medium' ? 'Orta' : 'Düşük'} Öncelik
+                    </span>
+                  </div>
+                  <p className="mb-4 text-sm leading-relaxed text-slate-700">{analysis.summary}</p>
+                  <div className="mb-4">
+                    <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Muhtemel Ekipman İhtiyaçları</div>
+                    <ul className="space-y-1.5">
+                      {analysis.equipmentNeeds.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-emerald-500" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="border-t border-emerald-100 pt-3">
+                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Ana İçgörü</div>
+                    <p className="text-sm font-medium text-emerald-900">{analysis.keyInsight}</p>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGenerateAnalysis}
+                  disabled={analysisLoading}
+                  className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {analysisLoading ? 'AI Analiz Ediyor...' : 'AI Analizi Üret'}
+                </button>
+              )}
+
+              {/* Mail Taslağı */}
+              {emailData && (
                 <div className="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
                   <div className="flex items-center gap-2 border-b border-gray-200 bg-white px-4 py-2.5">
                     <Mail className="h-3.5 w-3.5 text-gray-500" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Taslak Hazır</span>
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">AI Mail Taslağı</span>
                   </div>
                   <div className="px-4 py-4 text-sm leading-relaxed text-slate-700">
                     <div className="mb-3 text-xs text-gray-500">
-                      <span className="font-medium text-slate-700">Konu:</span> {selected.project_name?.slice(0, 60)} Yatırımınız Hakkında
+                      <span className="font-medium text-slate-700">Konu:</span> {emailData.subject}
                     </div>
-                    <p className="mb-2">Sayın {selected.company?.display_name || selected.raw_company_name} yetkilisi,</p>
-                    <p className="mb-2">
-                      {selected.location?.trim() || "ilgili bölgede"} planladığınız {selected.project_name} projesini öğrendik. Tebrik ederiz.
-                    </p>
-                    <p className="mb-2">
-                      Firmamız bu tür projelerde teknik destek sağlayabilecek çözümler sunuyor. 20 dakikalık bir ön görüşme yapabilir miyiz?
-                    </p>
-                    <p>Saygılarımla,</p>
+                    <div className="whitespace-pre-wrap">{emailData.body}</div>
                   </div>
                 </div>
               )}
             </div>
 
             <div className="border-t border-gray-100 bg-white px-8 py-5">
-              <button onClick={() => setEmailGenerated(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.99]">
+              <button
+                onClick={handleGenerateEmail}
+                disabled={emailLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.99] disabled:opacity-60"
+              >
                 <Mail className="h-4 w-4" />
-                {emailGenerated ? "Yeniden Üret" : "Tanışma Maili Taslağı Üret"}
+                {emailLoading ? 'Mail Üretiliyor...' : emailData ? 'Yeniden Üret' : 'Tanışma Maili Taslağı Üret'}
               </button>
               <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-medium text-slate-700 transition hover:bg-gray-50">
                 <Bookmark className="h-4 w-4" />
