@@ -107,17 +107,43 @@ export async function GET(req: NextRequest) {
     });
 
     console.log(`📥 Excel indiriliyor: ${EXCEL_URL}`);
-    const response = await fetch(EXCEL_URL, {
-      headers: { 'User-Agent': USER_AGENT },
-      agent: httpsAgent,
-    });
 
-    if (!response.ok) {
-      throw new Error(`Excel indirilemedi: HTTP ${response.status}`);
+    // Retry mantığı: ECONNRESET gibi geçici hatalarda 3 kez dene
+    let buffer: ArrayBuffer | null = null;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(EXCEL_URL, {
+          headers: { 'User-Agent': USER_AGENT },
+          agent: httpsAgent,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        buffer = await response.arrayBuffer();
+        console.log(`✅ Excel indirildi: ${(buffer.byteLength / 1024).toFixed(1)} KB (deneme ${attempt})`);
+        break; // başarı, döngüden çık
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`⚠️ Deneme ${attempt}/${maxRetries} başarısız: ${msg}`);
+        
+        if (attempt === maxRetries) {
+          throw new Error(`Excel ${maxRetries} denemeden sonra indirilemedi: ${msg}`);
+        }
+        
+        // Denemeler arası artan bekleme (2s, 4s, 8s)
+        const waitMs = 2000 * Math.pow(2, attempt - 1);
+        console.log(`⏳ ${waitMs/1000}s bekleniyor...`);
+        await new Promise(r => setTimeout(r, waitMs));
+      }
     }
 
-    const buffer = await response.arrayBuffer();
-    console.log(`✅ Excel indirildi: ${(buffer.byteLength / 1024).toFixed(1)} KB`);
+    if (!buffer) {
+      throw new Error('Buffer boş kaldı');
+    }
     // 2. Parse et
     const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];

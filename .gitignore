@@ -43,3 +43,6 @@ next-env.d.ts
 # Test ve debug dosyaları
 *.xlsx
 test.*
+
+# Scraper log dosyaları
+scripts/logs/
