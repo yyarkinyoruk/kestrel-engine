@@ -1,0 +1,38 @@
+name: Daily ÇED Scraper
+
+# Ne zaman çalışacağı
+on:
+  # Her gün sabah 06:00 Türkiye saatiyle (UTC 03:00)
+  schedule:
+    - cron: '0 3 * * *'
+  
+  # Manuel tetikleme için (test etmek isteyince Actions sekmesinden "Run workflow" butonu)
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Call Kestrel scraper endpoint
+        run: |
+          echo "🦅 Starting Kestrel ÇED scraper..."
+          response=$(curl -s -w "\n%{http_code}" \
+            -H "x-kestrel-secret: ${{ secrets.KESTREL_CRON_SECRET }}" \
+            --max-time 600 \
+            "${{ secrets.VERCEL_URL }}/api/scrapers/eced")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "HTTP Status: $http_code"
+          echo "Response body:"
+          echo "$body"
+          
+          if [ "$http_code" != "200" ]; then
+            echo "❌ Scraper failed with status $http_code"
+            exit 1
+          fi
+          
+          echo "✅ Scraper completed successfully"
