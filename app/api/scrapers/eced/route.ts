@@ -97,7 +97,7 @@ export async function GET(req: NextRequest) {
   try {
     console.log('🦅 Kestrel ÇED scraper başladı');
 
-    console.log('🦅 Kestrel ÇED scraper başladı');
+
 
     // 1. Excel dosyasını indir
     // Türk devlet sitelerinin eski HTTPS protokolleriyle uyumlu özel HTTP agent
