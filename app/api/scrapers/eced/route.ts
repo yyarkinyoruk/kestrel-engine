@@ -197,6 +197,18 @@ export async function GET(req: NextRequest) {
         // Signal için duplicate kontrolü
         const projectName = (row['PROJENİN ADI'] || '').toString().trim();
         const announcementDate = parseDate(row['KARAR TARİHİ']);
+        // GEÇİCİ TEŞHİS — bu blok sorun çözüldükten sonra silinecek
+        if (rawCompanyName.toLowerCase().includes('14.04') ||
+            (typeof row['KARAR TARİHİ'] === 'string' && row['KARAR TARİHİ'].includes('14.04')) ||
+            announcementDate === '2026-04-14') {
+          console.log('🔍 14 NİSAN KAYDI:', {
+            firma: rawCompanyName,
+            proje: projectName,
+            ham_tarih: row['KARAR TARİHİ'],
+            ham_tarih_tipi: typeof row['KARAR TARİHİ'],
+            parse_edilmis_tarih: announcementDate,
+          });
+        }
 
         const { data: existingSignal } = await supabase
           .from('ced_signals')
