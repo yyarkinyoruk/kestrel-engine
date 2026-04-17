@@ -1,5 +1,46 @@
 // Kestrel AI — Type tanımları
 // Supabase tablolarının TypeScript temsilleri
+// Satıcı Firma (Kestrel müşterisi)
+
+export interface Seller {
+  id: string;
+  name: string;
+  website: string;
+  sector: string;
+  contact_email: string;
+  logo_url: string;
+  created_at: string;
+}
+
+// Ürün Kataloğu
+export interface CatalogProduct {
+  id: number;
+  seller_id: string;
+  name: string;
+  model_code: string;
+  category: string;
+  description: string;
+  features: string[];
+  applications: string[];
+  keywords: string[];
+  image_url: string;
+  product_url: string;
+  created_at: string;
+}
+
+// AI Fırsat Eşleştirmesi
+export interface Opportunity {
+  id: number;
+  signal_source: 'eced' | 'tkdk';
+  signal_id: number;
+  seller_id: string;
+  matched_product_ids: number[];
+  match_score: number;
+  ai_reasoning: string;
+  ai_suggestion: string;
+  status: 'new' | 'viewed' | 'contacted' | 'won' | 'lost';
+  created_at: string;
+}
 
 export type Company = {
     id: number;

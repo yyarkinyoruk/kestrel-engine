@@ -22,6 +22,7 @@ import {
   Database,
   Building2,
   Gauge,
+  Zap,
 } from "lucide-react";
 import type { SignalWithCompany } from "@/lib/types";
 import type { AiAnalysis } from "@/lib/gemini";
@@ -142,8 +143,8 @@ export default function DashboardClient({
             <ul className="space-y-1">
               <NavItem icon={<LayoutDashboard className="h-4 w-4" />} label="Gündem" active href="/" />
               <NavItem icon={<Database className="h-4 w-4" />} label="TKDK Sinyalleri" badge="264" href="/tkdk" />
-              <NavItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" badge={String(totalSignals)} href="#" />
-              <NavItem icon={<Package className="h-4 w-4" />} label="Kataloğum" href="#" />
+              <NavItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" badge={String(totalSignals)} href="/opportunities" />
+              <NavItem icon={<Package className="h-4 w-4" />} label="Kataloğum" href="/catalog" />
               <NavItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="#" />
             </ul>
           </nav>
@@ -420,6 +421,28 @@ export default function DashboardClient({
               <button onClick={handleGenerateEmail} disabled={emailLoading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.99] disabled:opacity-60">
                 <Mail className="h-4 w-4" />
                 {emailLoading ? "Mail Üretiliyor..." : emailData ? "Yeniden Üret" : "Tanışma Maili Taslağı Üret"}
+              </button>
+              <button
+                onClick={async () => {
+                  if (!selected) return;
+                  const res = await fetch('/api/match', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ signalSource: 'eced', signalId: selected.id }),
+                  });
+                  const data = await res.json();
+                  if (data.success && data.matchCount > 0) {
+                    alert(`${data.matchCount} ürün eşleştirildi! Fırsatlar sayfasına gidin.`);
+                  } else if (data.success && data.matchCount === 0) {
+                    alert('Bu sinyal için uygun ürün eşleşmesi bulunamadı.');
+                  } else {
+                    alert('Hata: ' + (data.error || 'Bilinmeyen'));
+                  }
+                }}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+              >
+                <Zap className="h-4 w-4" />
+                Kataloğumla Eşleştir
               </button>
               <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-medium text-slate-700 transition hover:bg-gray-50">
                 <Bookmark className="h-4 w-4" />
