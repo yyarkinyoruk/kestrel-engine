@@ -30,3 +30,23 @@ export type Company = {
   export type SignalWithCompany = CedSignal & {
     company: Company;
   };
+
+  // TKDK IPARD Sinyalleri
+export interface TkdkSignal {
+  id: number;
+  source_no: number;
+  il: string;
+  firma: string;
+  yatirim_adi: string;
+  tedbir_kodu: string;
+  sektor: string;
+  adres: string;
+  baslangic_tarihi: string;
+  bitis_tarihi: string;
+  toplam_tl: string;
+  toplam_eur: string;
+  kamu_katkisi_orani: string;
+  durum: string;
+  kaynak: string;
+  created_at: string;
+}

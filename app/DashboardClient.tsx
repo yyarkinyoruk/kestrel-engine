@@ -168,6 +168,9 @@ export default function DashboardClient({
                   {new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", weekday: "long" })}
                 </div>
                 <h1 className="mt-0.5 text-[15px] font-semibold tracking-tight text-slate-900">Sektörel Yatırım Özetiniz</h1>
+                <Link href="/tkdk" className="mt-1 inline-block text-sm text-emerald-600 underline hover:text-emerald-800">
+                  TKDK Sinyalleri →
+                </Link>
               </div>
               <div className="flex items-center gap-2">
                 <button className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-slate-900">
