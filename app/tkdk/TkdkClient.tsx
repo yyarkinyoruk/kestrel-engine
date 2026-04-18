@@ -2,6 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import {
+  LayoutDashboard,
+  Target,
+  Package,
+  Settings,
+  Database,
+  Sparkles,
+  ChevronRight,
+  X,
+} from 'lucide-react';
 import { TkdkSignal } from '@/lib/types';
 
 interface TkdkClientProps {
@@ -59,7 +69,6 @@ export default function TkdkClient({
     return val + ' TL';
   }
 
-  // Page numbers with ellipsis
   function getPageNumbers() {
     const pages: (number | string)[] = [];
     if (totalPages <= 7) {
@@ -79,245 +88,268 @@ export default function TkdkClient({
   const allCount = Object.values(sektorCounts).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              Kestrel AI — TKDK Yatırım Sinyalleri
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              IPARD III Gıda İşleme Yatırımları · {totalSignals} sinyal
-            </p>
+    <div className="min-h-screen bg-gray-50 font-sans text-slate-900 antialiased">
+      <div className="flex min-h-screen">
+        {/* Sidebar */}
+        <aside className="fixed inset-y-0 left-0 z-20 flex w-64 flex-col bg-slate-900 text-white">
+          <div className="flex items-center gap-2.5 px-6 pb-8 pt-7">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-500/20">
+              <Sparkles className="h-4 w-4 text-white" strokeWidth={2.5} />
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="text-sm font-semibold tracking-tight">Kestrel AI</span>
+              <span className="mt-0.5 text-[10px] font-medium tracking-wide text-slate-400">INVESTMENT SIGNALS</span>
+            </div>
           </div>
-          <Link
-            href="/"
-            className="text-sm text-gray-500 hover:text-gray-700 underline"
-          >
-            ← e-ÇED Dashboard
-          </Link>
-        </div>
-      </header>
+          <nav className="flex-1 px-3">
+            <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Menü</div>
+            <ul className="space-y-1">
+              <SidebarItem icon={<LayoutDashboard className="h-4 w-4" />} label="Gündem" href="/" />
+              <SidebarItem icon={<Database className="h-4 w-4" />} label="TKDK Sinyalleri" active href="/tkdk" />
+              <SidebarItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" href="/opportunities" />
+              <SidebarItem icon={<Package className="h-4 w-4" />} label="Kataloğum" href="/catalog" />
+              <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="#" />
+            </ul>
+          </nav>
+          <div className="mx-3 mb-4 rounded-xl border border-slate-800 bg-slate-800/40 p-3 backdrop-blur">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-600 to-slate-700 text-xs font-semibold ring-2 ring-slate-700">YY</div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">Yarkın Yörük</div>
+                <div className="truncate text-xs text-slate-400">Kestrel AI Beta</div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-slate-500" />
+            </div>
+          </div>
+        </aside>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Sector filter tabs */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          <Link
-            href={buildHref({ sektor: 'all', page: 1 })}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-              currentSektor === 'all'
-                ? 'bg-gray-900 text-white'
-                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-100'
-            }`}
-          >
-            Tümü ({allCount})
-          </Link>
-          {Object.entries(sektorCounts)
-            .sort((a, b) => b[1] - a[1])
-            .map(([sektor, count]) => (
+        {/* Main */}
+        <div className="flex-1 pl-64">
+          <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-xl">
+            <div className="flex h-16 items-center justify-between px-10">
+              <div>
+                <h1 className="text-[15px] font-semibold tracking-tight text-slate-900">TKDK Yatırım Sinyalleri</h1>
+                <p className="text-xs text-gray-500">IPARD III Gıda İşleme Yatırımları · {totalSignals} sinyal</p>
+              </div>
+            </div>
+          </header>
+
+          <main className="px-10 py-10">
+            {/* Sector filter tabs */}
+            <div className="flex flex-wrap gap-2 mb-8">
               <Link
-                key={sektor}
-                href={buildHref({ sektor, page: 1 })}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                  currentSektor === sektor
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-100'
+                href={buildHref({ sektor: 'all', page: 1 })}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  currentSektor === 'all'
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                {sektorLabels[sektor] || sektor} ({count})
+                Tümü ({allCount})
               </Link>
-            ))}
-        </div>
-
-        {/* Table */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500">Firma</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500">İl</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500">Sektör</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500">Yatırım</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-500">Tutar</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500">Hibe %</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {signals.map((signal) => (
-                  <tr
-                    key={signal.id}
-                    className="hover:bg-gray-50 cursor-pointer transition"
-                    onClick={() => setSelectedSignal(signal)}
-                  >
-                    <td className="px-4 py-3 font-medium text-gray-900 max-w-[200px] truncate">
-                      {signal.firma}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{signal.il}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          sektorColors[signal.sektor] || 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {sektorLabels[signal.sektor] || signal.sektor}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">
-                      {signal.yatirim_adi}
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-600 whitespace-nowrap">
-                      {formatTL(signal.toplam_tl)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      %{signal.kamu_katkisi_orani}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-6">
-            {currentPage > 1 && (
-              <Link
-                href={buildHref({ page: currentPage - 1 })}
-                className="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-100"
-              >
-                ‹ Önceki
-              </Link>
-            )}
-            {getPageNumbers().map((p, i) =>
-              typeof p === 'string' ? (
-                <span key={`e${i}`} className="px-2 text-gray-400">
-                  …
-                </span>
-              ) : (
-                <Link
-                  key={p}
-                  href={buildHref({ page: p })}
-                  className={`px-3 py-1 rounded text-sm ${
-                    p === currentPage
-                      ? 'bg-gray-900 text-white'
-                      : 'border border-gray-300 hover:bg-gray-100'
-                  }`}
-                >
-                  {p}
-                </Link>
-              )
-            )}
-            {currentPage < totalPages && (
-              <Link
-                href={buildHref({ page: currentPage + 1 })}
-                className="px-3 py-1 rounded border border-gray-300 text-sm hover:bg-gray-100"
-              >
-                Sonraki ›
-              </Link>
-            )}
-          </div>
-        )}
-
-        {/* Detail Drawer */}
-        {selectedSignal && (
-          <div className="fixed inset-0 z-50 flex justify-end">
-            <div
-              className="absolute inset-0 bg-black/30"
-              onClick={() => setSelectedSignal(null)}
-            />
-            <div className="relative w-full max-w-lg bg-white shadow-xl overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-900">Sinyal Detayı</h2>
-                <button
-                  onClick={() => setSelectedSignal(null)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="px-6 py-6 space-y-5">
-                <div>
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                      sektorColors[selectedSignal.sektor] || 'bg-gray-100 text-gray-800'
+              {Object.entries(sektorCounts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([sektor, count]) => (
+                  <Link
+                    key={sektor}
+                    href={buildHref({ sektor, page: 1 })}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      currentSektor === sektor
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                     }`}
                   >
-                    {selectedSignal.sektor}
-                  </span>
-                  <span className="ml-2 text-xs text-gray-400">
-                    {selectedSignal.tedbir_kodu}
-                  </span>
-                </div>
+                    {sektorLabels[sektor] || sektor} ({count})
+                  </Link>
+                ))}
+            </div>
 
+            {/* Table */}
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                      <th className="px-6 py-3.5">Firma</th>
+                      <th className="px-6 py-3.5">İl</th>
+                      <th className="px-6 py-3.5">Sektör</th>
+                      <th className="px-6 py-3.5">Yatırım</th>
+                      <th className="px-6 py-3.5 text-right">Tutar</th>
+                      <th className="px-6 py-3.5">Hibe %</th>
+                      <th className="px-6 py-3.5"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {signals.map((signal) => (
+                      <tr
+                        key={signal.id}
+                        className="group cursor-pointer border-b border-gray-50 transition hover:bg-gray-50/60 last:border-0"
+                        onClick={() => setSelectedSignal(signal)}
+                      >
+                        <td className="px-6 py-5">
+                          <div className="text-sm font-semibold text-slate-900 max-w-[200px] truncate">
+                            {signal.firma}
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-sm text-gray-600">{signal.il}</td>
+                        <td className="px-6 py-5">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                              sektorColors[signal.sektor] || 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {sektorLabels[signal.sektor] || signal.sektor}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5 text-sm text-gray-600 max-w-[200px] truncate">
+                          {signal.yatirim_adi}
+                        </td>
+                        <td className="px-6 py-5 text-right text-sm text-gray-600 whitespace-nowrap">
+                          {formatTL(signal.toplam_tl)}
+                        </td>
+                        <td className="px-6 py-5 text-sm text-gray-600">
+                          %{signal.kamu_katkisi_orani}
+                        </td>
+                        <td className="px-6 py-5">
+                          <ChevronRight className="h-4 w-4 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-slate-900" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-center gap-2">
+                {currentPage > 1 && (
+                  <Link
+                    href={buildHref({ page: currentPage - 1 })}
+                    className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-gray-50"
+                  >
+                    ‹ Önceki
+                  </Link>
+                )}
+                {getPageNumbers().map((p, i) =>
+                  typeof p === 'string' ? (
+                    <span key={`e${i}`} className="px-2 text-gray-400">…</span>
+                  ) : (
+                    <Link
+                      key={p}
+                      href={buildHref({ page: p })}
+                      className={`flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-xs font-medium transition ${
+                        p === currentPage
+                          ? 'bg-slate-900 text-white'
+                          : 'border border-gray-200 bg-white text-slate-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {p}
+                    </Link>
+                  )
+                )}
+                {currentPage < totalPages && (
+                  <Link
+                    href={buildHref({ page: currentPage + 1 })}
+                    className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-gray-50"
+                  >
+                    Sonraki ›
+                  </Link>
+                )}
+              </div>
+            )}
+
+            <p className="mt-6 text-center text-xs text-gray-400">
+              TKDK IPARD III İmzalanan Sözleşmeler Listesinden alınmıştır · Yayımlanma: 04.03.2026
+            </p>
+          </main>
+        </div>
+      </div>
+
+      {/* Detail Drawer */}
+      {selectedSignal && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm" onClick={() => setSelectedSignal(null)} />
+          <div className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col bg-white shadow-2xl" style={{ animation: 'slideIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards' }}>
+            <div className="flex items-start justify-between border-b border-gray-100 px-8 pb-6 pt-8">
+              <div>
+                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${sektorColors[selectedSignal.sektor] || 'bg-gray-100 text-gray-800'}`}>
+                  {selectedSignal.sektor}
+                </span>
+                <span className="ml-2 text-xs text-gray-400">{selectedSignal.tedbir_kodu}</span>
+                <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-900">{selectedSignal.firma}</h2>
+              </div>
+              <button onClick={() => setSelectedSignal(null)} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-slate-900">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-8 py-6">
+              <div className="mb-6">
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Yatırım Adı</div>
+                <p className="text-sm text-slate-700">{selectedSignal.yatirim_adi}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
-                  <p className="text-sm text-gray-500">Firma</p>
-                  <p className="text-base font-semibold text-gray-900">
-                    {selectedSignal.firma}
-                  </p>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">İl</div>
+                  <p className="text-sm text-slate-700">{selectedSignal.il}</p>
                 </div>
-
                 <div>
-                  <p className="text-sm text-gray-500">Yatırım Adı</p>
-                  <p className="text-base text-gray-900">{selectedSignal.yatirim_adi}</p>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Adres</div>
+                  <p className="text-sm text-slate-700">{selectedSignal.adres || '-'}</p>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">İl</p>
-                    <p className="text-base text-gray-900">{selectedSignal.il}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Adres</p>
-                    <p className="text-base text-gray-900">{selectedSignal.adres || '-'}</p>
-                  </div>
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Başlangıç</div>
+                  <p className="text-sm text-slate-700">{selectedSignal.baslangic_tarihi}</p>
                 </div>
+                <div>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Bitiş</div>
+                  <p className="text-sm text-slate-700">{selectedSignal.bitis_tarihi}</p>
+                </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Başlangıç</p>
-                    <p className="text-base text-gray-900">
-                      {selectedSignal.baslangic_tarihi}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Bitiş</p>
-                    <p className="text-base text-gray-900">
-                      {selectedSignal.bitis_tarihi}
-                    </p>
-                  </div>
+              <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-5">
+                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Toplam Yatırım</div>
+                <p className="text-xl font-bold text-gray-900">{selectedSignal.toplam_tl} TL</p>
+                <p className="text-sm text-gray-500 mt-1">{selectedSignal.toplam_eur} EUR</p>
+                <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between text-sm">
+                  <span className="text-gray-500">Kamu (TKDK) katkısı</span>
+                  <span className="font-medium text-emerald-700">%{selectedSignal.kamu_katkisi_orani}</span>
                 </div>
+              </div>
 
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-500 mb-1">Toplam Yatırım</p>
-                  <p className="text-xl font-bold text-gray-900">
-                    {selectedSignal.toplam_tl} TL
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedSignal.toplam_eur} EUR
-                  </p>
-                  <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between text-sm">
-                    <span className="text-gray-500">Kamu (TKDK) katkısı</span>
-                    <span className="font-medium text-emerald-700">
-                      %{selectedSignal.kamu_katkisi_orani}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-xs text-gray-400 pt-2">
-                  Kaynak: {selectedSignal.kaynak} · #{selectedSignal.source_no}
-                </div>
+              <div className="text-xs text-gray-400">
+                Kaynak: {selectedSignal.kaynak} · #{selectedSignal.source_no}
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <p className="mt-6 text-center text-xs text-gray-400">
-          TKDK IPARD III İmzalanan Sözleşmeler Listesinden alınmıştır · Yayımlanma: 04.03.2026
-        </p>
-      </div>
+      <style jsx global>{`
+        @keyframes slideIn {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+      `}</style>
     </div>
+  );
+}
+
+function SidebarItem({ icon, label, active, badge, href = '#' }: { icon: React.ReactNode; label: string; active?: boolean; badge?: string; href?: string }) {
+  return (
+    <li>
+      <Link href={href} className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${active ? 'bg-white/10 text-white shadow-sm' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}>
+        <span className="flex items-center gap-3">
+          {icon}
+          <span className="font-medium">{label}</span>
+        </span>
+        {badge && <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">{badge}</span>}
+      </Link>
+    </li>
   );
 }

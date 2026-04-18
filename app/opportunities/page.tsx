@@ -8,6 +8,7 @@ export default async function OpportunitiesPage() {
   const { data: opportunities } = await supabase
     .from('opportunities')
     .select('*')
+    .gte('match_score', 50)
     .order('match_score', { ascending: false })
     .order('created_at', { ascending: false });
 

@@ -94,7 +94,7 @@ export default function OpportunitiesClient({
             <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Menü</div>
             <ul className="space-y-1">
               <SidebarItem icon={<LayoutDashboard className="h-4 w-4" />} label="Gündem" href="/" />
-              <SidebarItem icon={<Database className="h-4 w-4" />} label="TKDK Sinyalleri" badge="264" href="/tkdk" />
+              <SidebarItem icon={<Database className="h-4 w-4" />} label="TKDK Sinyalleri" href="/tkdk" />
               <SidebarItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" active badge={String(opportunities.length)} href="/opportunities" />
               <SidebarItem icon={<Package className="h-4 w-4" />} label="Kataloğum" href="/catalog" />
               <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="#" />

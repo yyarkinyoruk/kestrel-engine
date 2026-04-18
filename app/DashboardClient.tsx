@@ -141,11 +141,11 @@ export default function DashboardClient({
           <nav className="flex-1 px-3">
             <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Menü</div>
             <ul className="space-y-1">
-              <NavItem icon={<LayoutDashboard className="h-4 w-4" />} label="Gündem" active href="/" />
-              <NavItem icon={<Database className="h-4 w-4" />} label="TKDK Sinyalleri" badge="264" href="/tkdk" />
-              <NavItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" badge={String(totalSignals)} href="/opportunities" />
-              <NavItem icon={<Package className="h-4 w-4" />} label="Kataloğum" href="/catalog" />
-              <NavItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="#" />
+              <SidebarItem icon={<LayoutDashboard className="h-4 w-4" />} label="Gündem" active href="/" />
+              <SidebarItem icon={<Database className="h-4 w-4" />} label="TKDK Sinyalleri" href="/tkdk" />
+              <SidebarItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" href="/opportunities" />
+              <SidebarItem icon={<Package className="h-4 w-4" />} label="Kataloğum" href="/catalog" />
+              <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="#" />
             </ul>
           </nav>
 
@@ -467,7 +467,7 @@ export default function DashboardClient({
   );
 }
 
-function NavItem({ icon, label, active, badge, href = "#" }: { icon: React.ReactNode; label: string; active?: boolean; badge?: string; href?: string }) {
+function SidebarItem({ icon, label, active, badge, href = "#" }: { icon: React.ReactNode; label: string; active?: boolean; badge?: string; href?: string }) {
   return (
     <li>
       <Link href={href} className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${active ? "bg-white/10 text-white shadow-sm" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}>
