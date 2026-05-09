@@ -20,6 +20,7 @@ import {
   MapPin,
   Factory,
   Database,
+  Briefcase,
   Building2,
   Gauge,
   Zap,
@@ -143,6 +144,7 @@ export default function DashboardClient({
             <ul className="space-y-1">
               <SidebarItem icon={<LayoutDashboard className="h-4 w-4" />} label="Gündem" active href="/" />
               <SidebarItem icon={<Database className="h-4 w-4" />} label="TKDK Sinyalleri" href="/tkdk" />
+              <SidebarItem icon={<Briefcase className="h-4 w-4" />} label="İş İlanları" href="/jobs" />
               <SidebarItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" href="/opportunities" />
               <SidebarItem icon={<Package className="h-4 w-4" />} label="Kataloğum" href="/catalog" />
               <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="#" />

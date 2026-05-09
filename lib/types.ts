@@ -91,3 +91,17 @@ export interface TkdkSignal {
   kaynak: string;
   created_at: string;
 }
+
+export interface KariyerSignal {
+  kariyer_id: string;
+  company_name: string;
+  title: string;
+  location: string | null;
+  description_text: string | null;
+  url: string | null;
+  publish_date: string | null;
+  sector: string | null;
+  is_processed: boolean;
+  first_seen_at: string;
+  last_seen_at: string;
+}
