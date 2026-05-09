@@ -104,4 +104,13 @@ export interface KariyerSignal {
   is_processed: boolean;
   first_seen_at: string;
   last_seen_at: string;
+  intent_score: number | null;
+  intent_analysis: {
+    reasoning?: string;
+    detected_equipment?: string[];
+    investment_type?: string;
+    sales_recommendation?: string;
+    equipment_intent_score?: number;
+  } | null;
+  matched_keywords: string[] | null;
 }

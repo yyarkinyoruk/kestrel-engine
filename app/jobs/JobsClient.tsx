@@ -24,6 +24,26 @@ interface JobsClientProps {
   sectorCounts: Record<string, number>;
 }
 
+function cleanDescriptionText(text: string | null | undefined) {
+  if (!text) return '';
+  return text.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function intentScoreBadgeClass(score: number | null): string | null {
+  if (score === null || score === 0) return null;
+  if (score >= 60) return 'bg-emerald-100 text-emerald-700';
+  if (score >= 30) return 'bg-amber-100 text-amber-700';
+  return 'bg-gray-100 text-gray-600';
+}
+
+function IntentScoreBadge({ score }: { score: number | null }) {
+  const cls = intentScoreBadgeClass(score);
+  if (!cls) return null;
+  return (
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${cls}`}>{score}</span>
+  );
+}
+
 export default function JobsClient({
   signals,
   currentPage,
@@ -131,6 +151,7 @@ export default function JobsClient({
                       <th className="px-6 py-3.5">Lokasyon</th>
                       <th className="px-6 py-3.5">Sektör</th>
                       <th className="px-6 py-3.5">Yayın Tarihi</th>
+                      <th className="px-6 py-3.5">Skor</th>
                       <th className="px-6 py-3.5"></th>
                     </tr>
                   </thead>
@@ -146,6 +167,9 @@ export default function JobsClient({
                         <td className="max-w-[180px] truncate px-6 py-5 text-sm text-gray-600">{signal.location || '-'}</td>
                         <td className="px-6 py-5 text-sm text-gray-600">{signal.sector || 'Bilinmiyor'}</td>
                         <td className="px-6 py-5 text-sm text-gray-600">{formatDate(signal.publish_date)}</td>
+                        <td className="px-6 py-5">
+                          <IntentScoreBadge score={signal.intent_score ?? null} />
+                        </td>
                         <td className="px-6 py-5">
                           <ChevronRight className="h-4 w-4 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-slate-900" />
                         </td>
@@ -243,10 +267,46 @@ export default function JobsClient({
                 <p className="text-sm text-slate-700">{selectedSignal.sector || 'Bilinmiyor'}</p>
               </div>
 
+              {selectedSignal.intent_analysis ? (
+                <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50/80 p-5">
+                  <div className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-gray-500">AI Analizi</div>
+                  {intentScoreBadgeClass(selectedSignal.intent_score ?? null) ? (
+                    <div className="mb-4 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-medium text-gray-600">Intent Score</span>
+                      <IntentScoreBadge score={selectedSignal.intent_score ?? null} />
+                    </div>
+                  ) : null}
+                  {selectedSignal.intent_analysis.reasoning ? (
+                    <div className="mb-4">
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Değerlendirme</div>
+                      <p className="whitespace-pre-wrap text-sm text-slate-700">{selectedSignal.intent_analysis.reasoning}</p>
+                    </div>
+                  ) : null}
+                  {selectedSignal.intent_analysis.detected_equipment?.length ? (
+                    <div className="mb-4">
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Tespit Edilen Ekipman</div>
+                      <p className="text-sm text-slate-700">{selectedSignal.intent_analysis.detected_equipment.join(', ')}</p>
+                    </div>
+                  ) : null}
+                  {selectedSignal.intent_analysis.investment_type ? (
+                    <div className="mb-4">
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Yatırım Tipi</div>
+                      <p className="text-sm text-slate-700">{selectedSignal.intent_analysis.investment_type}</p>
+                    </div>
+                  ) : null}
+                  {selectedSignal.intent_analysis.sales_recommendation ? (
+                    <div>
+                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Satış Önerisi</div>
+                      <p className="whitespace-pre-wrap text-sm text-slate-700">{selectedSignal.intent_analysis.sales_recommendation}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
               <div className="mb-6">
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Açıklama</div>
                 <p className="whitespace-pre-wrap text-sm text-slate-700">
-                  {selectedSignal.description_text?.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim() || 'Açıklama çekilemedi'}
+                  {cleanDescriptionText(selectedSignal.description_text) || 'Açıklama çekilemedi'}
                 </p>
               </div>
 

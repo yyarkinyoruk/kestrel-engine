@@ -33,7 +33,7 @@ export default async function JobsPage({
   let dataQuery = supabase
     .from('kariyer_signals')
     .select('*')
-    .order('publish_date', { ascending: false, nullsFirst: false })
+    .order('intent_score', { ascending: false, nullsFirst: false })
     .range(from, to);
 
   if (sektorFilter !== 'all') {
