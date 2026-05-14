@@ -53,6 +53,15 @@ export type Company = {
     updated_at: string;
   };
   
+  export type CedCatalogAnalysis = {
+    reasoning?: string;
+    match_score?: number;
+    matched_products?: string[];
+    investment_type?: string;
+    recommended_action?: string;
+    sales_approach?: string;
+  };
+
   export type CedSignal = {
     id: number;
     company_id: number;
@@ -63,7 +72,11 @@ export type Company = {
     announcement_date: string | null;
     source_url: string | null;
     raw_text: string | null;
+    description_text?: string | null;
     scraped_at: string;
+    catalog_match_score: number | null;
+    catalog_analysis: CedCatalogAnalysis | null;
+    is_catalog_matched: boolean;
   };
   
   // UI'de birleşik halde kullanacağımız tip:
@@ -90,6 +103,35 @@ export interface TkdkSignal {
   durum: string;
   kaynak: string;
   created_at: string;
+}
+
+/** /opportunities — ÇED + Kariyer + TKDK birleşik satırı */
+export interface UnifiedOpportunity {
+  id: string;
+  source: 'eced' | 'kariyer' | 'tkdk';
+  companyName: string;
+  projectName: string;
+  location: string | null;
+  sector: string | null;
+  score: number;
+  date: string | null;
+  analysis: Record<string, unknown> | null;
+  url?: string | null;
+  /** Drawer metinleri (opsiyonel) */
+  descriptionText?: string | null;
+  rawText?: string | null;
+}
+
+/** saved_opportunities tablosu */
+export interface SavedOpportunity {
+  id: number;
+  source: 'eced' | 'kariyer' | 'tkdk';
+  signal_id: string;
+  company_name: string;
+  project_name: string;
+  score: number;
+  notes: string | null;
+  saved_at: string;
 }
 
 export interface KariyerSignal {

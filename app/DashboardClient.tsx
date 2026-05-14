@@ -11,8 +11,6 @@ import {
   Download,
   X,
   Sparkles,
-  Mail,
-  Bookmark,
   ChevronRight,
   ChevronLeft,
   Search,
@@ -23,10 +21,56 @@ import {
   Briefcase,
   Building2,
   Gauge,
-  Zap,
+  Bookmark,
 } from "lucide-react";
-import type { SignalWithCompany } from "@/lib/types";
-import type { AiAnalysis } from "@/lib/gemini";
+import type { CedCatalogAnalysis, SignalWithCompany } from "@/lib/types";
+
+function cleanNbspText(text: string | null | undefined): string {
+  if (!text) return "";
+  return text.replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function catalogScoreBadgeClass(score: number | null | undefined): string | null {
+  if (score == null || score === 0) return null;
+  if (score >= 50) return "bg-emerald-100 text-emerald-700";
+  if (score >= 30) return "bg-amber-100 text-amber-700";
+  return "bg-gray-100 text-gray-600";
+}
+
+function CatalogMatchScoreBadge({ score }: { score: number | null | undefined }) {
+  const cls = catalogScoreBadgeClass(score);
+  if (!cls) return null;
+  return (
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${cls}`}>{score}</span>
+  );
+}
+
+function hasCatalogAnalysis(ca: SignalWithCompany["catalog_analysis"]): boolean {
+  if (ca == null || typeof ca !== "object" || Array.isArray(ca)) return false;
+  const o = ca as CedCatalogAnalysis;
+  const hasProducts = Array.isArray(o.matched_products) && o.matched_products.length > 0;
+  const hasStrings = [o.reasoning, o.investment_type, o.recommended_action, o.sales_approach].some(
+    (v) => typeof v === "string" && v.trim() !== ""
+  );
+  return hasProducts || hasStrings;
+}
+
+function recommendedActionBadge(action: string | undefined) {
+  const a = (action || "").trim().toLowerCase();
+  const variants: Record<string, { label: string; cls: string }> = {
+    hemen_ara: { label: "Hemen Ara", cls: "bg-emerald-100 text-emerald-700" },
+    takipte_kal: { label: "Takipte Kal", cls: "bg-amber-100 text-amber-700" },
+    atla: { label: "Atla", cls: "bg-gray-100 text-gray-600" },
+  };
+  const m = variants[a];
+  if (m) {
+    return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${m.cls}`}>{m.label}</span>;
+  }
+  if ((action || "").trim()) {
+    return <span className="text-sm text-slate-700">{action}</span>;
+  }
+  return null;
+}
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "—";
@@ -44,78 +88,93 @@ function formatDate(dateStr: string | null): string {
   return `${date.getDate()} ${months[date.getMonth()]}`;
 }
 
+function buildDashboardHref(page: number, sort: string): string {
+  const sp = new URLSearchParams();
+  if (page > 1) sp.set("page", String(page));
+  if (sort === "score") sp.set("sort", "score");
+  const q = sp.toString();
+  return q ? `/?${q}` : "/";
+}
+
+function CatalogMatchSection({ signal }: { signal: SignalWithCompany }) {
+  if (!hasCatalogAnalysis(signal.catalog_analysis)) return null;
+  const ca = signal.catalog_analysis as CedCatalogAnalysis;
+  const displayScore = signal.catalog_match_score ?? ca.match_score;
+  const productsLine = Array.isArray(ca.matched_products) ? ca.matched_products.filter(Boolean).join(", ") : "";
+  const actionBadge = recommendedActionBadge(ca.recommended_action);
+
+  return (
+    <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50/90 p-5">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">Katalog Eşleştirmesi</span>
+        <CatalogMatchScoreBadge score={displayScore} />
+      </div>
+      {ca.reasoning?.trim() ? (
+        <div className="mb-4">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500">AI Değerlendirme</div>
+          <p className="text-sm leading-relaxed text-slate-700">{ca.reasoning}</p>
+        </div>
+      ) : null}
+      {productsLine ? (
+        <div className="mb-4">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Eşleşen Ürünler</div>
+          <p className="text-sm text-slate-700">{productsLine}</p>
+        </div>
+      ) : null}
+      {ca.investment_type?.trim() ? (
+        <div className="mb-4">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Yatırım Tipi</div>
+          <p className="text-sm text-slate-700">{ca.investment_type}</p>
+        </div>
+      ) : null}
+      {actionBadge ? (
+        <div className="mb-4">
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Önerilen Aksiyon</div>
+          <div>{actionBadge}</div>
+        </div>
+      ) : null}
+      {ca.sales_approach?.trim() ? (
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Satış Önerisi</div>
+          <p className="text-sm leading-relaxed text-slate-700">{ca.sales_approach}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SignalDescriptionSection({ signal }: { signal: SignalWithCompany }) {
+  const text = cleanNbspText(signal.description_text ?? signal.raw_text);
+  if (!text) return null;
+  return (
+    <div className="mb-6">
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Açıklama</div>
+      <p className="break-words text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{text}</p>
+    </div>
+  );
+}
+
 export default function DashboardClient({
   signals,
   currentPage,
   totalPages,
   totalSignals,
+  currentSort,
 }: {
   signals: SignalWithCompany[];
   currentPage: number;
   totalPages: number;
   totalSignals: number;
+  currentSort: string;
 }) {
   const [selected, setSelected] = useState<SignalWithCompany | null>(null);
-  const [activeFilter, setActiveFilter] = useState("Bu Ay");
-  const [emailData, setEmailData] = useState<{ subject: string; body: string } | null>(null);
-  const [emailLoading, setEmailLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<AiAnalysis | null>(null);
-  const [analysisLoading, setAnalysisLoading] = useState(false);
 
   const openDrawer = (sig: SignalWithCompany) => {
     setSelected(sig);
-    setEmailData(null);
-    setAnalysis(null);
   };
 
   const closeDrawer = () => {
     setSelected(null);
-    setEmailData(null);
-    setAnalysis(null);
-  };
-
-  const handleGenerateAnalysis = async () => {
-    if (!selected) return;
-    setAnalysisLoading(true);
-    try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signalId: selected.id, mode: "analysis" }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setAnalysis(data.analysis);
-      } else {
-        alert("AI analizi alınamadı: " + (data.error || "Bilinmeyen hata"));
-      }
-    } catch (err) {
-      alert("Bağlantı hatası: " + String(err));
-    } finally {
-      setAnalysisLoading(false);
-    }
-  };
-
-  const handleGenerateEmail = async () => {
-    if (!selected) return;
-    setEmailLoading(true);
-    try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signalId: selected.id, mode: "email" }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setEmailData(data.email);
-      } else {
-        alert("Mail taslağı alınamadı: " + (data.error || "Bilinmeyen hata"));
-      }
-    } catch (err) {
-      alert("Bağlantı hatası: " + String(err));
-    } finally {
-      setEmailLoading(false);
-    }
   };
 
   const visiblePages = Array.from({ length: totalPages }, (_, i) => i + 1).filter((p) => {
@@ -142,12 +201,13 @@ export default function DashboardClient({
           <nav className="flex-1 px-3">
             <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Menü</div>
             <ul className="space-y-1">
+              <SidebarItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" href="/opportunities" />
+              <SidebarItem icon={<Bookmark className="h-4 w-4" />} label="Kaydedilenler" href="/saved" />
               <SidebarItem icon={<LayoutDashboard className="h-4 w-4" />} label="Gündem" active href="/" />
               <SidebarItem icon={<Database className="h-4 w-4" />} label="TKDK Sinyalleri" href="/tkdk" />
               <SidebarItem icon={<Briefcase className="h-4 w-4" />} label="İş İlanları" href="/jobs" />
-              <SidebarItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" href="/opportunities" />
               <SidebarItem icon={<Package className="h-4 w-4" />} label="Kataloğum" href="/catalog" />
-              <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="#" />
+              <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="/settings" />
             </ul>
           </nav>
 
@@ -200,13 +260,20 @@ export default function DashboardClient({
             </div>
 
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <div className="flex flex-col gap-3 border-b border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-1.5 rounded-full bg-gray-100 p-1">
-                  {["Bugün", "Bu Hafta", "Bu Ay"].map((f) => (
-                    <button key={f} onClick={() => setActiveFilter(f)} className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${activeFilter === f ? "bg-white text-slate-900 shadow-sm" : "text-gray-500 hover:text-slate-900"}`}>
-                      {f}
-                    </button>
-                  ))}
+                  <Link
+                    href={buildDashboardHref(1, "date")}
+                    className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${currentSort !== "score" ? "bg-white text-slate-900 shadow-sm" : "text-gray-500 hover:text-slate-900"}`}
+                  >
+                    En Güncel
+                  </Link>
+                  <Link
+                    href={buildDashboardHref(1, "score")}
+                    className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${currentSort === "score" ? "bg-white text-slate-900 shadow-sm" : "text-gray-500 hover:text-slate-900"}`}
+                  >
+                    En Yüksek Skor
+                  </Link>
                 </div>
                 <div className="text-xs text-gray-500">
                   <span className="font-medium text-slate-900">{totalSignals}</span> yatırım sinyali
@@ -218,6 +285,7 @@ export default function DashboardClient({
                   <thead>
                     <tr className="border-b border-gray-100 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
                       <th className="px-6 py-3.5">Tarih</th>
+                      <th className="px-6 py-3.5">AI Skor</th>
                       <th className="px-6 py-3.5">Lokasyon</th>
                       <th className="px-6 py-3.5">Firma</th>
                       <th className="px-6 py-3.5">Tesis Türü</th>
@@ -230,6 +298,23 @@ export default function DashboardClient({
                       <tr key={sig.id} onClick={() => openDrawer(sig)} className="group cursor-pointer border-b border-gray-50 transition hover:bg-gray-50/60 last:border-0">
                         <td className="px-6 py-5">
                           <span className="text-xs font-medium text-gray-500">{formatDate(sig.announcement_date)}</span>
+                        </td>
+                        <td className="px-6 py-5">
+                          {sig.catalog_match_score && sig.catalog_match_score > 0 ? (
+                            <span
+                              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
+                                sig.catalog_match_score >= 50
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : sig.catalog_match_score >= 30
+                                    ? "bg-amber-100 text-amber-700"
+                                    : "bg-gray-100 text-gray-600"
+                              }`}
+                            >
+                              {sig.catalog_match_score}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-gray-400">Eşleşme yok</span>
+                          )}
                         </td>
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-1.5 text-sm text-slate-700">
@@ -277,7 +362,7 @@ export default function DashboardClient({
               </div>
               <div className="flex items-center gap-2">
                 {currentPage > 1 ? (
-                  <Link href={`/?page=${currentPage - 1}`} className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-gray-50">
+                  <Link href={buildDashboardHref(currentPage - 1, currentSort)} className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-gray-50">
                     <ChevronLeft className="h-3.5 w-3.5" />
                     Önceki
                   </Link>
@@ -295,7 +380,7 @@ export default function DashboardClient({
                     return (
                       <span key={p} className="flex items-center gap-1">
                         {showEllipsis && <span className="px-1 text-gray-400">…</span>}
-                        <Link href={`/?page=${p}`} className={`flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-xs font-medium transition ${p === currentPage ? "bg-slate-900 text-white" : "border border-gray-200 bg-white text-slate-700 hover:bg-gray-50"}`}>
+                        <Link href={buildDashboardHref(p, currentSort)} className={`flex h-8 min-w-[2rem] items-center justify-center rounded-lg px-2 text-xs font-medium transition ${p === currentPage ? "bg-slate-900 text-white" : "border border-gray-200 bg-white text-slate-700 hover:bg-gray-50"}`}>
                           {p}
                         </Link>
                       </span>
@@ -304,7 +389,7 @@ export default function DashboardClient({
                 </div>
 
                 {currentPage < totalPages ? (
-                  <Link href={`/?page=${currentPage + 1}`} className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-gray-50">
+                  <Link href={buildDashboardHref(currentPage + 1, currentSort)} className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-gray-50">
                     Sonraki
                     <ChevronRight className="h-3.5 w-3.5" />
                   </Link>
@@ -330,7 +415,7 @@ export default function DashboardClient({
               <div>
                 <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-600">
                   <Sparkles className="h-3 w-3" />
-                  AI Fırsat Analizi
+                  e-ÇED Sinyali
                 </div>
                 <h2 className="text-xl font-semibold tracking-tight text-slate-900">{selected.company?.display_name || selected.raw_company_name}</h2>
                 <div className="mt-1.5 flex items-center gap-2 text-xs text-gray-500">
@@ -343,7 +428,7 @@ export default function DashboardClient({
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-8 py-6">
+            <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
               <div className="mb-6 rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-emerald-50/30 p-5">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Proje</div>
                 <div className="mt-1 text-sm font-medium text-emerald-900 leading-snug">{selected.project_name}</div>
@@ -360,6 +445,25 @@ export default function DashboardClient({
               </div>
 
               <div className="mb-6">
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">AI Skor</div>
+                {selected.catalog_match_score != null && selected.catalog_match_score > 0 ? (
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${
+                      selected.catalog_match_score >= 50
+                        ? "bg-emerald-100 text-emerald-700"
+                        : selected.catalog_match_score >= 30
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {selected.catalog_match_score}
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400">Eşleşme yok</span>
+                )}
+              </div>
+
+              <div className="mb-6">
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Kaynak</div>
                 {selected.source_url ? (
                   <Link href={selected.source_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline break-all">
@@ -370,86 +474,14 @@ export default function DashboardClient({
                 )}
               </div>
 
-              {analysis ? (
-                <div className="mb-6 rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-white p-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-emerald-600" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">AI Analizi</span>
-                    <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold ${analysis.urgency === "high" ? "bg-red-50 text-red-700" : analysis.urgency === "medium" ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-gray-700"}`}>
-                      {analysis.urgency === "high" ? "Acil" : analysis.urgency === "medium" ? "Orta" : "Düşük"} Öncelik
-                    </span>
-                  </div>
-                  <p className="mb-4 text-sm leading-relaxed text-slate-700">{analysis.summary}</p>
-                  <div className="mb-4">
-                    <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">Muhtemel Ekipman İhtiyaçları</div>
-                    <ul className="space-y-1.5">
-                      {analysis.equipmentNeeds.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
-                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-emerald-500" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="border-t border-emerald-100 pt-3">
-                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">Ana İçgörü</div>
-                    <p className="text-sm font-medium text-emerald-900">{analysis.keyInsight}</p>
-                  </div>
+              {!hasCatalogAnalysis(selected.catalog_analysis) ? (
+                <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50/80 p-4">
+                  <span className="text-xs text-gray-400">Katalog eşleşmesi bulunamadı</span>
                 </div>
               ) : (
-                <button onClick={handleGenerateAnalysis} disabled={analysisLoading} className="mb-6 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50">
-                  <Sparkles className="h-4 w-4" />
-                  {analysisLoading ? "AI Analiz Ediyor..." : "AI Analizi Üret"}
-                </button>
+                <CatalogMatchSection signal={selected} />
               )}
-
-              {emailData && (
-                <div className="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-                  <div className="flex items-center gap-2 border-b border-gray-200 bg-white px-4 py-2.5">
-                    <Mail className="h-3.5 w-3.5 text-gray-500" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">AI Mail Taslağı</span>
-                  </div>
-                  <div className="px-4 py-4 text-sm leading-relaxed text-slate-700">
-                    <div className="mb-3 text-xs text-gray-500">
-                      <span className="font-medium text-slate-700">Konu:</span> {emailData.subject}
-                    </div>
-                    <div className="whitespace-pre-wrap">{emailData.body}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-gray-100 bg-white px-8 py-5">
-              <button onClick={handleGenerateEmail} disabled={emailLoading} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.99] disabled:opacity-60">
-                <Mail className="h-4 w-4" />
-                {emailLoading ? "Mail Üretiliyor..." : emailData ? "Yeniden Üret" : "Tanışma Maili Taslağı Üret"}
-              </button>
-              <button
-                onClick={async () => {
-                  if (!selected) return;
-                  const res = await fetch('/api/match', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ signalSource: 'eced', signalId: selected.id }),
-                  });
-                  const data = await res.json();
-                  if (data.success && data.matchCount > 0) {
-                    alert(`${data.matchCount} ürün eşleştirildi! Fırsatlar sayfasına gidin.`);
-                  } else if (data.success && data.matchCount === 0) {
-                    alert('Bu sinyal için uygun ürün eşleşmesi bulunamadı.');
-                  } else {
-                    alert('Hata: ' + (data.error || 'Bilinmeyen'));
-                  }
-                }}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
-              >
-                <Zap className="h-4 w-4" />
-                Kataloğumla Eşleştir
-              </button>
-              <button className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-sm font-medium text-slate-700 transition hover:bg-gray-50">
-                <Bookmark className="h-4 w-4" />
-                CRM&apos;e Kaydet
-              </button>
+              <SignalDescriptionSection signal={selected} />
             </div>
           </div>
         </div>

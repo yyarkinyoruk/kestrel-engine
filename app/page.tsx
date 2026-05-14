@@ -11,13 +11,14 @@ export const revalidate = 0;
 const PAGE_SIZE = 50;
 
 type PageProps = {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; sort?: string }>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
-  // URL'den ?page=2 gibi parametreyi oku
+  // URL'den ?page=2, ?sort=date|score parametrelerini oku
   const params = await searchParams;
   const currentPage = Math.max(1, parseInt(params.page || '1', 10));
+  const currentSort = params.sort === 'score' ? 'score' : 'date';
   const from = (currentPage - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
@@ -33,15 +34,24 @@ export default async function Page({ searchParams }: PageProps) {
   const totalSignals = totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalSignals / PAGE_SIZE));
 
-  // Bu sayfa için sinyalleri getir, en yeni karar tarihinden eskiye doğru sırala
-  const { data, error } = await supabase
+  // Bu sayfa için sinyalleri getir (sıralama: tarih veya katalog AI skoru)
+  let signalsQuery = supabase
     .from('ced_signals')
-    .select(`
+    .select(
+      `
       *,
+      catalog_match_score,
+      catalog_analysis,
       company:companies(*)
-    `)
-    .order('announcement_date', { ascending: false, nullsFirst: false })
-    .range(from, to);
+    `
+    );
+
+  signalsQuery =
+    currentSort === 'score'
+      ? signalsQuery.order('catalog_match_score', { ascending: false, nullsFirst: false })
+      : signalsQuery.order('announcement_date', { ascending: false, nullsFirst: false });
+
+  const { data, error } = await signalsQuery.range(from, to);
 
   if (error) {
     console.error('Supabase error:', error);
@@ -63,6 +73,7 @@ export default async function Page({ searchParams }: PageProps) {
       currentPage={currentPage}
       totalPages={totalPages}
       totalSignals={totalSignals}
+      currentSort={currentSort}
     />
   );
 }

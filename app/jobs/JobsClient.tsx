@@ -12,6 +12,7 @@ import {
   ChevronRight,
   X,
   Briefcase,
+  Bookmark,
 } from 'lucide-react';
 import { KariyerSignal } from '@/lib/types';
 
@@ -106,12 +107,13 @@ export default function JobsClient({
           <nav className="flex-1 px-3">
             <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Menü</div>
             <ul className="space-y-1">
+              <SidebarItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" href="/opportunities" />
+              <SidebarItem icon={<Bookmark className="h-4 w-4" />} label="Kaydedilenler" href="/saved" />
               <SidebarItem icon={<LayoutDashboard className="h-4 w-4" />} label="Gündem" href="/" />
               <SidebarItem icon={<Database className="h-4 w-4" />} label="TKDK Sinyalleri" href="/tkdk" />
               <SidebarItem icon={<Briefcase className="h-4 w-4" />} label="İş İlanları" active href="/jobs" />
-              <SidebarItem icon={<Target className="h-4 w-4" />} label="Fırsatlar" href="/opportunities" />
               <SidebarItem icon={<Package className="h-4 w-4" />} label="Kataloğum" href="/catalog" />
-              <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="#" />
+              <SidebarItem icon={<Settings className="h-4 w-4" />} label="Ayarlar" href="/settings" />
             </ul>
           </nav>
           <div className="mx-3 mb-4 rounded-xl border border-slate-800 bg-slate-800/40 p-3 backdrop-blur">
