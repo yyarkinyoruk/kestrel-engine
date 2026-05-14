@@ -3,24 +3,26 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('kestrel-auth');
-  const isLoginPage = request.nextUrl.pathname === '/login';
-  const isAuthApi = request.nextUrl.pathname.startsWith('/api/auth');
+  const path = request.nextUrl.pathname;
+  const isLandingPage = path === '/landing';
+  const isLoginPage = path === '/login';
+  const isAuthApi = path.startsWith('/api/auth');
   const isCronApi =
-    request.nextUrl.pathname.startsWith('/api/cron') ||
-    request.nextUrl.pathname.startsWith('/api/scrapers') ||
-    request.nextUrl.pathname.startsWith('/api/match') ||
-    request.nextUrl.pathname.startsWith('/api/analyze');
+    path.startsWith('/api/cron') ||
+    path.startsWith('/api/scrapers') ||
+    path.startsWith('/api/match') ||
+    path.startsWith('/api/analyze');
 
   if (isAuthApi || isCronApi) {
     return NextResponse.next();
   }
 
-  if (!token && !isLoginPage) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (token && (isLandingPage || isLoginPage)) {
+    return NextResponse.redirect(new URL('/opportunities', request.url));
   }
 
-  if (token && isLoginPage) {
-    return NextResponse.redirect(new URL('/', request.url));
+  if (!token && !isLandingPage && !isLoginPage) {
+    return NextResponse.redirect(new URL('/landing', request.url));
   }
 
   return NextResponse.next();
