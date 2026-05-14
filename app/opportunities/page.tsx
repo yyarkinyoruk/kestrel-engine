@@ -96,7 +96,7 @@ export default async function OpportunitiesPage({ searchParams }: PageProps) {
     location: row.il ?? null,
     sector: row.sektor,
     score: Number(row.catalog_match_score ?? 0),
-    date: row.baslangic_tarihi || '2026-01-01',
+    date: '2026-01-01',
     analysis: (row.catalog_analysis as Record<string, unknown> | null) ?? null,
     url: null,
     descriptionText: null,
